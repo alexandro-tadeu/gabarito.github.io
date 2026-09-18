@@ -1,0 +1,2248 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Leitor de Gabarito PWA - Câmera Melhorada</title>
+  <style>
+    :root {
+      --bg: #f4f6fb;
+      --card: #fff;
+      --text: #111827;
+      --muted: #6b7280;
+      --line: #e5e7eb;
+      --primary: #2563eb;
+      --ok: #15803d;
+      --err: #b91c1c;
+      --warn: #b45309;
+      --review: #7c3aed;
+      --read: #0369a1;
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--text)
+    }
+
+    header {
+      background: linear-gradient(135deg, #1e3a8a, #2563eb);
+      color: #fff;
+      text-align: center;
+      padding: 22px 12px
+    }
+
+    header h1 {
+      margin: 0 0 6px;
+      font-size: 26px
+    }
+
+    header p {
+      margin: 0;
+      font-size: 15px
+    }
+
+    main {
+      max-width: 1180px;
+      margin: 18px auto 70px;
+      padding: 0 14px
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 14px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, .05)
+    }
+
+    h2 {
+      font-size: 18px;
+      margin: 0 0 12px
+    }
+
+    label {
+      display: block;
+      font-weight: bold;
+      margin: 10px 0 6px
+    }
+
+    input,
+    textarea,
+    select {
+      width: 100%;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 15px;
+      background: #fff
+    }
+
+    textarea {
+      min-height: 110px;
+      resize: vertical
+    }
+
+    .grid4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px
+    }
+
+    .grid3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px
+    }
+
+    .grid2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px
+    }
+
+    .notice {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      color: #1e3a8a;
+      padding: 12px;
+      border-radius: 12px;
+      margin-bottom: 12px;
+      font-size: 14px
+    }
+
+    .warning {
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      color: #92400e;
+      padding: 12px;
+      border-radius: 12px;
+      margin-bottom: 12px;
+      font-size: 14px
+    }
+
+    .hint {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 6px
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 14px
+    }
+
+    button {
+      border: 0;
+      border-radius: 10px;
+      padding: 11px 15px;
+      font-weight: bold;
+      font-size: 15px;
+      cursor: pointer
+    }
+
+    .primary {
+      background: var(--primary);
+      color: #fff
+    }
+
+    .secondary {
+      background: #e5e7eb;
+      color: #111827
+    }
+
+    .success {
+      background: #dcfce7;
+      color: #166534
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 14px
+    }
+
+    .tabs button {
+      background: #e5e7eb;
+      color: #111827
+    }
+
+    .tabs button.active {
+      background: #2563eb;
+      color: #fff
+    }
+
+    .tab {
+      display: none
+    }
+
+    .tab.active {
+      display: block
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 10px;
+      margin-top: 12px
+    }
+
+    .metric {
+      background: #f9fafb;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      text-align: center
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 23px
+    }
+
+    .metric span {
+      font-size: 12px;
+      color: var(--muted)
+    }
+
+    #photoCanvas {
+      width: 100%;
+      max-height: 760px;
+      object-fit: contain;
+      border: 1px solid var(--line);
+      background: #111827;
+      border-radius: 12px;
+      cursor: crosshair;
+      display: none
+    }
+
+    .corner-list {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-top: 10px
+    }
+
+    .corner-item {
+      background: #f9fafb;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 9px;
+      text-align: center;
+      font-size: 13px
+    }
+
+    .corner-item.done {
+      background: #f0fdf4;
+      border-color: #bbf7d0;
+      color: #166534;
+      font-weight: bold
+    }
+
+    table.result {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 14px
+    }
+
+    table.result th,
+    table.result td {
+      border: 1px solid var(--line);
+      padding: 8px;
+      text-align: center;
+      font-size: 14px
+    }
+
+    table.result th {
+      background: #f3f4f6
+    }
+
+    tr.ok td {
+      background: #f0fdf4
+    }
+
+    tr.err td {
+      background: #fef2f2
+    }
+
+    tr.blank td {
+      background: #fffbeb
+    }
+
+    tr.review td {
+      background: #f5f3ff
+    }
+
+    tr.read td {
+      background: #f0f9ff
+    }
+
+    .badge {
+      display: inline-block;
+      border-radius: 999px;
+      padding: 4px 9px;
+      font-size: 12px;
+      font-weight: bold
+    }
+
+    .badge.ok {
+      background: #dcfce7;
+      color: var(--ok)
+    }
+
+    .badge.err {
+      background: #fee2e2;
+      color: var(--err)
+    }
+
+    .badge.blank {
+      background: #fef3c7;
+      color: var(--warn)
+    }
+
+    .badge.review {
+      background: #ede9fe;
+      color: var(--review)
+    }
+
+    .badge.read {
+      background: #e0f2fe;
+      color: var(--read)
+    }
+
+    .answer-select {
+      max-width: 85px;
+      padding: 6px
+    }
+
+    .score-mini {
+      font-size: 11px;
+      color: #374151
+    }
+
+    .sheet-preview {
+      background: #d1d5db;
+      border-radius: 12px;
+      padding: 18px;
+      overflow: auto
+    }
+
+    .a4 {
+      width: 210mm;
+      min-height: 297mm;
+      margin: 0 auto;
+      background: #fff;
+      color: #111;
+      padding: 7mm;
+      box-shadow: 0 0 12px rgba(0, 0, 0, .25);
+      font-family: "Times New Roman", Arial, serif;
+      overflow: hidden
+    }
+
+    .logos {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr 1fr;
+      border: 0.45mm solid #111;
+      height: 22mm;
+      font-family: Arial, Helvetica, sans-serif
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      border-right: 0.45mm solid #111;
+      text-align: center
+    }
+
+    .logo:last-child {
+      border-right: 0
+    }
+
+    .etec {
+      font-size: 15mm;
+      font-weight: 900;
+      line-height: .85
+    }
+
+    .cps {
+      font-size: 11mm;
+      font-weight: 900;
+      color: #b91c1c;
+      line-height: .85
+    }
+
+    .sp {
+      font-size: 7.5mm;
+      font-weight: 900
+    }
+
+    .small {
+      font-size: 3mm;
+      font-weight: bold
+    }
+
+    .top {
+      display: grid;
+      grid-template-columns: 1.08fr 1fr;
+      gap: 2.5mm;
+      margin-top: 2mm
+    }
+
+    .info {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 3.1mm;
+      font-weight: bold
+    }
+
+    .info td {
+      border: .35mm solid #111;
+      padding: 1.1mm;
+      height: 8mm;
+      vertical-align: middle;
+      overflow: hidden
+    }
+
+    .instr {
+      border: .35mm solid #111;
+      padding: 1.5mm 2mm;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 2.7mm;
+      min-height: 80mm;
+      max-height: none;
+      overflow: visible;
+    }
+
+    .instr h3 {
+      margin: 0 0 1mm;
+      font-size: 3.5mm
+    }
+
+    .instr ul {
+      margin: 0;
+      padding-left: 4mm
+    }
+
+    .instr li {
+      margin-bottom: .45mm
+    }
+
+    .ex {
+      display: flex;
+      gap: 1mm;
+      align-items: center;
+      margin-top: 1.3mm;
+      font-weight: bold;
+      font-size: 2.8mm
+    }
+
+    .excell {
+      border: .35mm solid #111;
+      width: 7mm;
+      height: 6mm;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative
+    }
+
+    .excell.marked:after {
+      content: "";
+      position: absolute;
+
+      width: 0;
+      height: 0;
+
+      border: 2.4mm solid #000;
+      border-radius: 50%;
+
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .bodygrid {
+      display: grid;
+      grid-template-columns: 82mm 1fr;
+      gap: 3mm;
+      margin-top: 2.5mm
+    }
+
+    .gabtitle {
+      text-align: center;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 6mm;
+      font-weight: 900;
+      margin: 1.5mm 0
+    }
+
+    .readbox {
+      border: .75mm solid #111;
+      padding: 1mm;
+      background: white
+    }
+
+    .readnote {
+      text-align: center;
+      font-family: Arial, Helvetica, sans-serif;
+      font-weight: bold;
+      font-size: 2.4mm;
+      margin-bottom: .8mm
+    }
+
+    .answergrid {
+      display: grid;
+      gap: 1.2mm
+    }
+
+    table.gab {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      font-family: Arial, Helvetica, sans-serif;
+      font-weight: bold
+    }
+
+    table.gab th,
+    table.gab td {
+      border: .3mm solid #111;
+      text-align: center;
+      vertical-align: middle;
+      height: 6.3mm;
+      font-size: 3mm;
+      padding: 0
+    }
+
+    table.gab th {
+      background: #f7f7f7
+    }
+
+    .qlabel {
+      width: 32%;
+      font-size: 2.85mm !important;
+      line-height: 1.05
+    }
+
+    .alt {
+      width: 13.6%;
+      position: relative
+    }
+
+    .altletter {
+      position: absolute;
+      top: .3mm;
+      left: .6mm;
+      font-size: 2mm
+    }
+
+    .bubble {
+      display: inline-block;
+      width: 3.6mm;
+      height: 3.6mm;
+      border: .45mm solid #111;
+      border-radius: 50%;
+      background: #fff;
+      margin-top: 1.8mm
+    }
+
+    .blankarea {
+      min-height: 25mm;
+    }
+
+    .occ {
+      margin-top: 1mm;
+      font-weight: bold;
+      font-size: 4.3mm;
+    }
+
+    .occ span {
+      font-style: italic;
+      font-size: 3.8mm
+    }
+
+    .line {
+      border-bottom: .3mm solid #111;
+      height: 6mm;
+      width: 95mm
+    }
+
+    @media(max-width:960px) {
+
+      .grid4,
+      .grid3,
+      .grid2,
+      .summary,
+      .corner-list {
+        grid-template-columns: 1fr
+      }
+
+      .sheet-preview {
+        padding: 8px
+      }
+    }
+
+    @media print {
+
+      html,
+      body {
+        width: 210mm;
+        margin: 0 !important;
+        background: #fff !important
+      }
+
+      header,
+      .no-print,
+      .tabs,
+      .tab:not(.active) {
+        display: none !important
+      }
+
+      main {
+        width: 210mm !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        max-width: none !important
+      }
+
+      .card {
+        border: 0 !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        border-radius: 0 !important
+      }
+
+      .sheet-preview {
+        padding: 0 !important;
+        background: #fff !important;
+        border-radius: 0 !important;
+        overflow: visible !important
+      }
+
+      .a4 {
+        width: 210mm !important;
+        height: 297mm !important;
+        min-height: 297mm !important;
+        margin: 0 !important;
+        padding: 7mm !important;
+        box-shadow: none !important;
+        overflow: hidden !important;
+        break-after: page
+      }
+
+      @page {
+        size: A4 portrait;
+        margin: 0
+      }
+    }
+  
+    .camera-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+    }
+
+    .camera-actions button {
+      flex: 1;
+      min-width: 160px;
+    }
+
+    .hidden-file {
+      display: none;
+    }
+
+  </style>
+
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#2563eb">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Leitor de Gabarito">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+
+</head>
+
+<body>
+  <header>
+    <h1>Leitor de Gabarito PWA - Câmera Melhorada</h1>
+    <p>Leitura por foto com câmera melhorada para celular.</p>
+  </header>
+
+  <main>
+    <div class="tabs no-print">
+      <button id="btnSetup" class="active" onclick="showTab('setup')">1. Configurar</button>
+      <button id="btnSheet" onclick="showTab('sheet')">2. Espelho A4</button>
+      <button id="btnPhoto" onclick="showTab('photo')">3. Corrigir foto</button>
+    </div>
+
+    <section id="setup" class="tab active">
+      <div class="card">
+        <h2>Configuração</h2>
+        <div class="notice">
+          Esta versão lê o <strong>bloco 1 e o bloco 2 separadamente</strong>. Isso corrige o problema em que apenas o
+          bloco da direita era identificado corretamente.
+        </div>
+        <div class="grid4">
+          <div><label>Quantidade de questões</label><input id="questionCount" type="number" min="1" max="80" value="20">
+          </div>
+          <div><label>Nota máxima</label><input id="scoreMax" type="number" min="0" step="0.1" value="10"></div>
+          <div><label>Colunas do gabarito</label><select id="columns">
+              <option value="auto">Automático</option>
+              <option value="1">1 coluna</option>
+              <option value="2">2 colunas</option>
+              <option value="3">3 colunas</option>
+            </select></div>
+          <div><label>Período</label><input id="periodo" value="matutino"></div>
+        </div>
+        <div class="grid2">
+          <div><label>Componente curricular</label><input id="component" value="BANCO DE DADOS I"></div>
+          <div><label>Professor</label><input id="teacher" value="Alexandro Tadeu Mathias de Souza"></div>
+        </div>
+        <div class="grid3">
+          <div><label>Curso</label><input id="course"
+              value="Ensino Médio com Habilitação Profissional de Técnico em Informática para Internet"></div>
+          <div><label>Módulo/Série</label><input id="module" placeholder="Ex.: 1º DS"></div>
+          <div><label>Data</label><input id="dateText" placeholder="____/____/____"></div>
+        </div>
+        <label>Nome do aluno para o relatório</label>
+        <input id="studentName" placeholder="Opcional">
+        <label>Gabarito oficial para correção</label>
+        <textarea id="answerKey" placeholder="Opcional para leitura. Obrigatório apenas para calcular acertos.
+Exemplo:
+1 A
+2 B
+3 C
+4 D
+5 E"></textarea>
+        <div class="actions">
+          <button class="primary" onclick="prepareCard()">Gerar espelho</button>
+          <button class="secondary" onclick="loadExample()">Carregar exemplo</button>
+          <button class="secondary" onclick="clearAll()">Limpar</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="sheet" class="tab">
+      <div class="card">
+        <h2 class="no-print">Espelho A4</h2>
+        <div class="warning no-print">Para salvar em PDF: A4, retrato, escala 100%, margens nenhuma e gráficos/cores de
+          fundo ativados.</div>
+        <div class="actions no-print">
+          <button class="primary" onclick="window.print()">Imprimir / Salvar em PDF</button>
+          <button class="secondary" onclick="showTab('photo')">Ir para leitura por foto</button>
+        </div>
+        <div id="sheetPreview" class="sheet-preview"></div>
+      </div>
+    </section>
+
+    <section id="photo" class="tab">
+      <div class="card no-print">
+        <h2>Leitura da foto</h2>
+        <div class="notice">
+          No celular, fotografe <strong>de perto</strong>, tentando pegar somente o quadro do <strong>GABARITO</strong>.
+          Se a foto ficar torta ou muito distante, clique nos <strong>4 cantos da tabela</strong> e use o botão
+          <strong>Ler usando 4 cantos</strong>.
+        </div>
+        <div class="grid3">
+          <div>
+            <label>Foto do cartão preenchido</label>
+
+            <div class="camera-actions">
+              <button type="button" class="primary" onclick="document.getElementById('cameraInput').click()">📷 Tirar foto no celular</button>
+              <button type="button" class="secondary" onclick="document.getElementById('photoInput').click()">🖼️ Escolher da galeria</button>
+            </div>
+
+            <input id="cameraInput" class="hidden-file" type="file" accept="image/*" capture="environment" onchange="loadPhoto(event)">
+            <input id="photoInput" class="hidden-file" type="file" accept="image/*" onchange="loadPhoto(event)">
+
+            <div class="hint">No celular, use “Tirar foto”. No computador, use “Escolher da galeria”.</div>
+          </div>
+          <div><label>Marcação mínima</label><input id="minMark" type="number" value="0.45" min="0" max="1" step="0.01">
+            <div class="hint">V8: padrão 0,45. Diminua se a marca estiver muito clara.</div>
+          </div>
+          <div><label>Diferença mínima</label><input id="minDiff" type="number" value="0.18" min="0" max="1"
+              step="0.01">
+            <div class="hint">V8: padrão 0,18. Evita confundir bolinha vazia com marcada.</div>
+          </div>
+        </div>
+        <div class="grid3">
+          <div><label>Quantidade de blocos na foto</label><select id="blockMode">
+              <option value="auto">Automático</option>
+              <option value="1">1 bloco</option>
+              <option value="2" selected>2 blocos</option>
+              <option value="3">3 blocos</option>
+            </select>
+            <div class="hint">Para o modelo enviado, use 2 blocos.</div>
+          </div>
+          <div><label>Posição vertical da leitura</label><input id="bubbleY" type="number" value="0.58" min="0.45"
+              max="0.80" step="0.01">
+            <div class="hint">V8: padrão 0,58. Usa área central, não ponto único.</div>
+          </div>
+          <div><label>Tamanho da área lida</label><input id="readRadius" type="number" value="0.42" min="0.20"
+              max="0.80" step="0.01">
+            <div class="hint">V8: lê uma região central da célula. Padrão 0,42.</div>
+          </div>
+        </div>
+        <div class="grid3">
+          <div><label>Modo de leitura</label><select id="readMode">
+              <option value="center" selected>Centro da bolinha</option>
+              <option value="strong">Mais forte</option>
+              <option value="soft">Mais sensível</option>
+            </select>
+            <div class="hint">Use “Mais sensível” se a caneta estiver clara.</div>
+          </div>
+          <div><label>Ajuste bloco 1</label><input id="block1Offset" value="0,0">
+            <div class="hint">Formato X,Y. Ex.: 2,0 ou -2,1.</div>
+          </div>
+          <div><label>Ajuste bloco 2</label><input id="block2Offset" value="0,0">
+            <div class="hint">Normalmente deixe 0,0.</div>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="secondary" onclick="resetCorners()">Limpar cantos</button>
+          <button class="primary" onclick="readMarks()">Ler automático</button>
+          <button class="secondary" onclick="readMarksManualFallback()">Ler usando 4 cantos</button>
+          <button class="success" onclick="applyOfficialKey()">Aplicar correção com gabarito oficial</button>
+        </div>
+        <div class="corner-list">
+          <div id="corner0" class="corner-item">1. Superior esquerdo</div>
+          <div id="corner1" class="corner-item">2. Superior direito</div>
+          <div id="corner2" class="corner-item">3. Inferior direito</div>
+          <div id="corner3" class="corner-item">4. Inferior esquerdo</div>
+        </div>
+        <div id="photoStatus" class="status-line"></div>
+      </div>
+
+      <div class="card no-print">
+        <h2>Imagem e pontos lidos</h2>
+        <canvas id="photoCanvas" onclick="handleCanvasClick(event)"></canvas>
+        <div class="hint">Após a leitura, o retângulo central de cada alternativa é avaliado. Azul = resposta lida sem
+          gabarito, verde = correta, vermelho = errada, roxo = revisar/em branco/duplicidade.</div>
+      </div>
+
+      <div class="card">
+        <h2>Resultado</h2>
+        <div class="summary">
+          <div class="metric"><strong id="metricTotal">0</strong><span>Total</span></div>
+          <div class="metric"><strong id="metricRead">0</strong><span>Lidas</span></div>
+          <div class="metric"><strong id="metricCorrect">-</strong><span>Acertos</span></div>
+          <div class="metric"><strong id="metricWrong">-</strong><span>Erros/revisar</span></div>
+          <div class="metric"><strong id="metricScore">-</strong><span>Nota</span></div>
+          <div class="metric"><strong id="metricMention">-</strong><span>Menção</span></div>
+        </div>
+        <div class="actions no-print">
+          <button class="success" onclick="copySummary()">Copiar resumo</button>
+          <button class="secondary" onclick="downloadCSV()">Baixar CSV</button>
+        </div>
+        <div id="resultTable"></div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    let questionCount = 20, currentColumns = 1, rowsPerColumn = 20, answerKey = [], detected = [], corners = [], imgLoaded = false, originalImage = null, lastPoints = [], detectedBoxes = [];
+    const letters = ["A", "B", "C", "D", "E"], qFrac = .32, optFrac = .68;
+
+    function showTab(id) {
+      document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".tabs button").forEach(b => b.classList.remove("active"));
+      document.getElementById(id).classList.add("active");
+      document.getElementById("btn" + id[0].toUpperCase() + id.slice(1)).classList.add("active");
+    }
+    function norm(v) {
+      if (v == null) return "";
+      v = String(v).trim().toUpperCase();
+      if (["-", "_", "BRANCO", "EM BRANCO"].includes(v)) return "";
+      v = v.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      const m = v.match(/[A-E]$/);
+      return m ? m[0] : "";
+    }
+    function parseKey(text) {
+      const raw = String(text || "").trim(); if (!raw) return [];
+      if (raw.includes(",") || raw.includes(";")) return raw.split(/[,\;\n]+/).map(norm).filter(Boolean);
+      return raw.split(/\n+/).map(line => {
+        const tokens = line.trim().split(/[\s\-\|\:\)\.]+/).filter(Boolean);
+        return tokens.length ? norm(tokens[tokens.length - 1]) : "";
+      }).filter(Boolean);
+    }
+    function colsFor(q) {
+      const v = document.getElementById("columns").value;
+      if (v != "auto") return parseInt(v, 10);
+      if (q <= 25) return 1; if (q <= 50) return 2; return 3;
+    }
+    function escapeHtml(s) { return String(s || "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;") }
+    function prepareCard() {
+      questionCount = parseInt(document.getElementById("questionCount").value || "20", 10);
+      if (!Number.isFinite(questionCount) || questionCount < 1 || questionCount > 80) { alert("Informe de 1 a 80 questões."); return }
+      currentColumns = colsFor(questionCount); rowsPerColumn = Math.ceil(questionCount / currentColumns);
+      answerKey = parseKey(document.getElementById("answerKey").value);
+      if (answerKey.length > 0 && answerKey.length !== questionCount) {
+        alert("Atenção: o gabarito oficial tem " + answerKey.length + " respostas, mas a prova tem " + questionCount + " questões. A leitura da foto funciona, mas a correção só será calculada quando as quantidades forem iguais.");
+      }
+      detected = Array.from({ length: questionCount }, () => ({ answer: "", status: "review", confidence: 0, scores: [] }));
+      renderSheet(); updateResults(); showTab("sheet");
+    }
+    function rowH() { if (questionCount <= 20) return 6.3; if (questionCount <= 30) return 5.7; if (questionCount <= 50) return 5.3; return 4.8 }
+    function renderSheet() {
+      const component = escapeHtml(document.getElementById("component").value || "BANCO DE DADOS I");
+      const course = escapeHtml(document.getElementById("course").value || "");
+      const moduleText = escapeHtml(document.getElementById("module").value || "");
+      const periodo = escapeHtml(document.getElementById("periodo").value || "");
+      const teacher = escapeHtml(document.getElementById("teacher").value || "");
+      const dateText = escapeHtml(document.getElementById("dateText").value || "___/___/___");
+      let html = `<div class="a4"><style>table.gab th,table.gab td{height:${rowH()}mm}${questionCount > 50 ? ".bodygrid{grid-template-columns:120mm 1fr}.qlabel{font-size:2.35mm!important}.bubble{width:3mm;height:3mm}.altletter{font-size:1.7mm}" : ""}
+    .camera-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+    }
+
+    .camera-actions button {
+      flex: 1;
+      min-width: 160px;
+    }
+
+    .hidden-file {
+      display: none;
+    }
+
+  </style>
+  <div class="logos"><div class="logo"><div class="etec">Etec</div><div class="small">Escola Técnica Estadual</div></div><div class="logo"><div class="cps">CPS</div><div class="small">Centro Paula Souza</div></div><div class="logo"><div class="sp">SÃO PAULO</div><div class="small">Governo do Estado</div></div></div>
+  <div class="top"><div><table class="info"><tr><td colspan="4">COMPONENTE CURRICULAR: ${component}</td></tr><tr><td colspan="4">Aluno(a):</td></tr><tr><td colspan="2">Curso: ${course}</td><td>Módulo/Série:<br>${moduleText}</td><td>Período:<br>${periodo}</td></tr><tr><td colspan="2">Professor: ${teacher}</td><td>Data:<br>${dateText}</td><td>MENÇÃO</td></tr></table></div>
+  
+  
+  <div class="instr">
+    <h3>📋 Instruções da atividade</h3>
+    <ul>
+      <li>Escreva seu nome completo no topo desta página, no local indicado.</li>
+      <li>Informe a data da aplicação dessa atividade no espaço reservado.</li>
+      <li>Não é permitido qualquer tipo de consulta, nem o uso de dispositivos eletrônicos ou audiovisuais.</li>
+      <li>Não é permitida a troca de materiais entre os alunos durante a atividade (ex.: lápis, borracha, caneta etc.). Cada aluno deve utilizar seu próprio material escolar.</li>
+      <li>A avaliação será composta por prova com questões dissertativas e objetivas (de múltipla escolha).</li>
+      <li>Após assinalar as questões objetivas (de múltipla escolha), justifique cada resposta, obrigatoriamente, com caneta esferográfica preta ou azul.</li>
+      <li>As respostas dissertativas também devem ser escritas com caneta esferográfica preta ou azul, utilizando argumentos claros e consistentes.</li>
+      <li>Escreva de forma legível; respostas que não puderem ser compreendidas não serão consideradas corretas.</li>
+      <li>O entendimento das questões faz parte da avaliação; portanto, não serão esclarecidas dúvidas durante a aplicação da atividade.</li>
+      <li>Releia suas respostas para garantir que atendeu a todos os requisitos propostos.</li>
+      <li>Respostas rasuradas, não assinaladas ou assinaladas em duplicidade não serão consideradas corretas.</li>
+      <li>Preencha completamente o espaço indicado para cada questão objetiva (de múltipla escolha), marcando apenas uma alternativa; </li>
+      
+      </ul>
+         
+      
+      <div class="ex"><span>EXEMPLO</span><span class="excell">A</span><span class="excell marked">B</span><span class="excell">C</span><span class="excell">D</span><span class="excell">E</span></div></div></div>
+  <div class="bodygrid"><div><div class="gabtitle">GABARITO</div><div class="readbox"><div class="readnote">CLIQUE NOS 4 CANTOS SOMENTE DA TABELA ABAIXO</div><div class="answergrid" style="grid-template-columns:repeat(${currentColumns},1fr)">`;
+      for (let c = 0; c < currentColumns; c++) {
+        html += `<table class="gab"><thead><tr><th class="qlabel">Questão</th><th>A</th><th>B</th><th>C</th><th>D</th><th>E</th></tr></thead><tbody>`;
+        for (let r = 0; r < rowsPerColumn; r++) {
+          const q = c * rowsPerColumn + r + 1;
+          if (q <= questionCount) {
+            html += `<tr><td class="qlabel">Questão<br>${q}</td>`;
+            letters.forEach(L => html += `<td class="alt"><span class="altletter">${L}</span><span class="bubble"></span></td>`);
+            html += `</tr>`;
+          } else html += `<tr><td class="qlabel">&nbsp;</td><td class="alt"></td><td class="alt"></td><td class="alt"></td><td class="alt"></td><td class="alt"></td></tr>`;
+        }
+        html += `</tbody></table>`;
+      }
+      html += `</div></div></div><div class="blankarea"></div></div><div class="occ">OCORRÊNCIAS <span>(Para uso do docente)</span><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div></div></div>`;
+      document.getElementById("sheetPreview").innerHTML = html;
+    }
+    function refreshSettingsForRead() {
+      questionCount = parseInt(document.getElementById("questionCount").value || "20", 10);
+      currentColumns = colsFor(questionCount);
+      rowsPerColumn = Math.ceil(questionCount / currentColumns);
+      answerKey = parseKey(document.getElementById("answerKey").value);
+      if (!Number.isFinite(questionCount) || questionCount < 1 || questionCount > 80) { alert("Informe de 1 a 80 questões."); return false }
+      return true;
+    }
+    function hasOfficialKey() {
+      return answerKey.length === questionCount;
+    }
+    function loadPhoto(e) {
+      const file = e.target.files[0]; if (!file) return;
+      const img = new Image();
+      img.onload = () => {
+        originalImage = img; imgLoaded = true; corners = []; lastPoints = []; detectedBoxes = [];
+        const canvas = document.getElementById("photoCanvas"), ctx = canvas.getContext("2d");
+        const sourceId = e && e.target ? e.target.id : "";
+        const maxWidth = sourceId === "cameraInput" ? 3000 : 1800;
+        const scale = Math.min(1, maxWidth / img.width);
+        canvas.width = Math.round(img.width * scale); canvas.height = Math.round(img.height * scale);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.style.display = "block"; updateCornerUI();
+        document.getElementById("photoStatus").textContent = sourceId === "cameraInput" ? "Foto do celular carregada. Tente Ler automático. Se não ficar bom, marque os 4 cantos da tabela e clique em Ler usando 4 cantos." : "Imagem carregada. Clique em Ler automático.";
+      };
+      img.src = URL.createObjectURL(file);
+    }
+    function handleCanvasClick(e) {
+      if (!imgLoaded) return;
+      if (corners.length >= 4) { document.getElementById("photoStatus").textContent = "Os 4 cantos já foram marcados. Limpe para refazer."; return }
+      const canvas = document.getElementById("photoCanvas"), rect = canvas.getBoundingClientRect();
+      corners.push({ x: (e.clientX - rect.left) * canvas.width / rect.width, y: (e.clientY - rect.top) * canvas.height / rect.height });
+      drawGuides(); updateCornerUI();
+      if (corners.length === 4) document.getElementById("photoStatus").textContent = "Cantos marcados. Clique em Ler bloco 1 e bloco 2.";
+    }
+    function updateCornerUI() {
+      const names = ["Superior esquerdo", "Superior direito", "Inferior direito", "Inferior esquerdo"];
+      for (let i = 0; i < 4; i++) {
+        const el = document.getElementById("corner" + i); if (!el) continue;
+        if (corners[i]) { el.classList.add("done"); el.textContent = (i + 1) + ". Marcado" } else { el.classList.remove("done"); el.textContent = (i + 1) + ". " + names[i] }
+      }
+    }
+    function resetCorners() { corners = []; lastPoints = []; detectedBoxes = []; drawGuides(); updateCornerUI(); document.getElementById("photoStatus").textContent = imgLoaded ? "Cantos apagados. Marque novamente." : "" }
+    function drawGuides() {
+      if (!imgLoaded || !originalImage) return;
+      const canvas = document.getElementById("photoCanvas"), ctx = canvas.getContext("2d");
+      ctx.drawImage(originalImage, 0, 0, canvas.width, canvas.height);
+      ctx.lineWidth = 3; ctx.strokeStyle = "#2563eb"; ctx.fillStyle = "#ef4444"; ctx.font = "bold 18px Arial";
+      corners.forEach((p, i) => { ctx.beginPath(); ctx.arc(p.x, p.y, 7, 0, Math.PI * 2); ctx.fill(); ctx.fillText(String(i + 1), p.x + 10, p.y - 8) });
+      if (corners.length > 1) { ctx.beginPath(); ctx.moveTo(corners[0].x, corners[0].y); for (let i = 1; i < corners.length; i++)ctx.lineTo(corners[i].x, corners[i].y); if (corners.length === 4) ctx.closePath(); ctx.stroke() }
+      detectedBoxes.forEach((b, idx) => {
+        ctx.save();
+        ctx.strokeStyle = idx === 0 ? "#f97316" : "#2563eb";
+        ctx.lineWidth = 3;
+        ctx.strokeRect(b.x, b.y, b.w, b.h);
+        ctx.fillStyle = idx === 0 ? "#f97316" : "#2563eb";
+        ctx.font = "bold 18px Arial";
+        ctx.fillText("Bloco " + (idx + 1), b.x + 6, b.y - 8);
+        ctx.restore();
+      });
+      lastPoints.forEach(p => {
+        const color = p.status === "ok" ? "#16a34a" : (p.status === "err" ? "#dc2626" : (p.status === "read" ? "#0284c7" : "#9333ea"));
+        ctx.fillStyle = color;
+        ctx.strokeStyle = color;
+        if (p.box) {
+          ctx.lineWidth = 1.5;
+          ctx.strokeRect(p.box.x, p.box.y, p.box.w, p.box.h);
+        } else {
+          ctx.beginPath(); ctx.arc(p.x, p.y, p.r || 5, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = "#fff"; ctx.lineWidth = 1; ctx.stroke();
+        }
+      });
+    }
+    function map(u, v) {
+      const [tl, tr, br, bl] = corners;
+      return {
+        x: tl.x * (1 - u) * (1 - v) + tr.x * u * (1 - v) + br.x * u * v + bl.x * (1 - u) * v,
+        y: tl.y * (1 - u) * (1 - v) + tr.y * u * (1 - v) + br.y * u * v + bl.y * (1 - u) * v
+      };
+    }
+    function markScore(imgData, x, y, r) {
+      const w = imgData.width, h = imgData.height, data = imgData.data;
+      const mode = document.getElementById("readMode") ? document.getElementById("readMode").value : "center";
+      let threshold = 150;
+      if (mode === "soft") threshold = 185;
+      if (mode === "strong") threshold = 130;
+
+      let darkPixels = 0;
+      let veryDarkPixels = 0;
+      let darknessSum = 0;
+      let count = 0;
+
+      const cx = Math.round(x), cy = Math.round(y), rr = Math.max(2, Math.round(r));
+
+      /*
+        Leitura corrigida:
+        - considera principalmente o centro da bolinha;
+        - ignora a borda impressa da bolinha;
+        - evita confundir letras e linhas da tabela com resposta marcada.
+      */
+      for (let yy = cy - rr; yy <= cy + rr; yy++) {
+        for (let xx = cx - rr; xx <= cx + rr; xx++) {
+          const dx = xx - cx, dy = yy - cy;
+          const dist2 = dx * dx + dy * dy;
+          if (dist2 > rr * rr) continue;
+          if (xx < 0 || yy < 0 || xx >= w || yy >= h) continue;
+
+          const idx = (yy * w + xx) * 4;
+          const red = data[idx], green = data[idx + 1], blue = data[idx + 2];
+
+          // Cinza ponderado melhora a leitura de foto com luz amarelada.
+          const gray = (red * 0.299) + (green * 0.587) + (blue * 0.114);
+          const darkness = 1 - (gray / 255);
+
+          // Peso maior no miolo da bolinha.
+          const dist = Math.sqrt(dist2) / rr;
+          const weight = dist < 0.55 ? 1.35 : 0.45;
+
+          darknessSum += darkness * weight;
+          count += weight;
+
+          if (gray < threshold) darkPixels += weight;
+          if (gray < 95) veryDarkPixels += weight;
+        }
+      }
+
+      if (!count) return 0;
+
+      const darkRatio = darkPixels / count;
+      const veryDarkRatio = veryDarkPixels / count;
+      const avgDarkness = darknessSum / count;
+
+      // Fórmula nova: prioriza preenchimento escuro dentro do miolo da bolinha.
+      return (darkRatio * 0.55) + (avgDarkness * 0.30) + (veryDarkRatio * 0.15);
+    }
+
+    function markScoreCell(imgData, xLeft, xRight, yTop, yBottom, areaFactor) {
+      const w = imgData.width, h = imgData.height, data = imgData.data;
+
+      const cellW = Math.max(2, xRight - xLeft);
+      const rowH = Math.max(2, yBottom - yTop);
+
+      /*
+        V8:
+        Em vez de ler um ponto pequeno, lê uma área central.
+        Isso corrige o bloco 1 porque pequenos deslocamentos não fazem mais a leitura cair fora da marcação.
+      */
+      const area = Math.max(0.20, Math.min(0.80, areaFactor || 0.42));
+
+      const xMargin = (1 - area) / 2;
+      const yStartFactor = 0.34;
+      const yEndFactor = 0.88;
+
+      const xs = Math.max(0, Math.round(xLeft + cellW * xMargin));
+      const xe = Math.min(w - 1, Math.round(xRight - cellW * xMargin));
+      const ys = Math.max(0, Math.round(yTop + rowH * yStartFactor));
+      const ye = Math.min(h - 1, Math.round(yTop + rowH * yEndFactor));
+
+      let ink = 0;
+      let strongInk = 0;
+      let colorOrDarkSum = 0;
+      let count = 0;
+
+      for (let y = ys; y <= ye; y++) {
+        for (let x = xs; x <= xe; x++) {
+          const idx = (y * w + x) * 4;
+          const red = data[idx], green = data[idx + 1], blue = data[idx + 2];
+
+          const gray = (red * 0.299) + (green * 0.587) + (blue * 0.114);
+          const maxc = Math.max(red, green, blue);
+          const minc = Math.min(red, green, blue);
+          const chroma = maxc - minc;
+          const darkness = 1 - (gray / 255);
+
+          /*
+            Aceita:
+            - caneta preta/azul escura: gray baixo;
+            - preenchimento azul do exemplo: chroma alto.
+            A borda da bolinha vazia tende a ocupar pouca área central.
+          */
+          const isDark = gray < 145;
+          const isSoftDark = gray < 175;
+          const isBlueOrColored = (chroma > 38 && gray < 235);
+
+          let pixelScore = 0;
+          if (isDark) pixelScore = 1;
+          else if (isBlueOrColored) pixelScore = Math.min(1, (chroma / 100) * 0.65 + darkness * 0.55);
+          else if (isSoftDark) pixelScore = 0.45;
+
+          if (pixelScore > 0) {
+            ink++;
+            colorOrDarkSum += pixelScore;
+          }
+
+          if (pixelScore >= 0.75) strongInk++;
+          count++;
+        }
+      }
+
+      if (!count) return { score: 0, inkRatio: 0, strongRatio: 0 };
+
+      const inkRatio = ink / count;
+      const strongRatio = strongInk / count;
+      const avgInk = ink ? colorOrDarkSum / ink : 0;
+
+      const score = (inkRatio * 0.70) + (avgInk * 0.20) + (strongRatio * 0.10);
+
+      return {
+        score,
+        inkRatio,
+        strongRatio,
+        box: { x: xs, y: ys, w: Math.max(1, xe - xs), h: Math.max(1, ye - ys) }
+      };
+    }
+
+    function optionU(i) { return qFrac + (i + .5) * (optFrac / 5) }
+
+    function gridPixelFromRGBA(red, green, blue) {
+      const gray = (red * 0.299) + (green * 0.587) + (blue * 0.114);
+      const maxc = Math.max(red, green, blue);
+      const minc = Math.min(red, green, blue);
+      const chroma = maxc - minc;
+
+      // Grade impressa: preto/cinza. Exclui bolinhas azuis para detectar somente linhas da tabela.
+      return gray < 150 && chroma < 85;
+    }
+
+    function findGridComponents(canvas, imgData) {
+      const w = canvas.width, h = canvas.height, data = imgData.data;
+      const mask = new Uint8Array(w * h);
+      const visited = new Uint8Array(w * h);
+
+      for (let y = 0; y < h; y++) {
+        let row = y * w;
+        for (let x = 0; x < w; x++) {
+          const idx = (row + x) * 4;
+          if (gridPixelFromRGBA(data[idx], data[idx + 1], data[idx + 2])) {
+            mask[row + x] = 1;
+          }
+        }
+      }
+
+      const comps = [];
+      const stack = [];
+
+      for (let i = 0; i < mask.length; i++) {
+        if (!mask[i] || visited[i]) continue;
+
+        visited[i] = 1;
+        stack.length = 0;
+        stack.push(i);
+
+        let area = 0;
+        let minX = w, maxX = 0, minY = h, maxY = 0;
+
+        while (stack.length) {
+          const p = stack.pop();
+          const x = p % w;
+          const y = (p / w) | 0;
+
+          area++;
+          if (x < minX) minX = x;
+          if (x > maxX) maxX = x;
+          if (y < minY) minY = y;
+          if (y > maxY) maxY = y;
+
+          const neighbors = [
+            p - 1,
+            p + 1,
+            p - w,
+            p + w
+          ];
+
+          for (const n of neighbors) {
+            if (n < 0 || n >= mask.length) continue;
+
+            // Evita conectar fim de linha com começo da linha seguinte.
+            if (n === p - 1 && x === 0) continue;
+            if (n === p + 1 && x === w - 1) continue;
+
+            if (mask[n] && !visited[n]) {
+              visited[n] = 1;
+              stack.push(n);
+            }
+          }
+        }
+
+        const comp = {
+          x: minX,
+          y: minY,
+          w: maxX - minX + 1,
+          h: maxY - minY + 1,
+          area
+        };
+
+        const ratio = comp.w / Math.max(1, comp.h);
+
+        if (comp.area > 180 && comp.w > 55 && comp.h > 70 && ratio > 0.25 && ratio < 5.0) {
+          comps.push(comp);
+        }
+      }
+
+      return comps;
+    }
+
+    function containsBox(a, b) {
+      return a.x <= b.x && a.y <= b.y && (a.x + a.w) >= (b.x + b.w) && (a.y + a.h) >= (b.y + b.h);
+    }
+
+    function getRequestedBlockCount() {
+      const el = document.getElementById("blockMode");
+      const v = el ? el.value : "auto";
+      if (v !== "auto") return parseInt(v, 10);
+
+      // Heurística: se a foto/tabela tiver dois componentes internos, usa 2.
+      // Para 20 questões no modelo em duas metades, o padrão mais estável é 2.
+      if (questionCount > 10 && questionCount <= 50) return 2;
+      return 1;
+    }
+
+    function chooseGridGroups(comps) {
+      if (!comps || !comps.length) return [];
+
+      const requested = getRequestedBlockCount();
+
+      let candidates = comps.filter(c => {
+        const ratio = c.w / Math.max(1, c.h);
+        return c.area > 250 && c.w > 70 && c.h > 90 && ratio > 0.25 && ratio < 4.8;
+      });
+
+      if (!candidates.length) return [];
+
+      /*
+        V6:
+        Remove moldura externa com mais segurança.
+        A versão anterior podia priorizar a moldura/grade da direita e deslocar o bloco 1.
+        Agora, qualquer componente que contenha outro componente grande é tratado como moldura externa.
+      */
+      candidates = candidates.filter(c => {
+        const inside = candidates.filter(o => {
+          if (o === c) return false;
+          if (!containsBox(c, o)) return false;
+          return o.w >= c.w * 0.25 && o.h >= c.h * 0.45 && o.area >= c.area * 0.45;
+        });
+        return inside.length === 0;
+      });
+
+      // Ordena da esquerda para a direita, priorizando blocos internos de tabela.
+      candidates.sort((a, b) => {
+        const ay = a.y + a.h / 2, by = b.y + b.h / 2;
+        if (Math.abs(ay - by) > 25) return ay - by;
+        return a.x - b.x;
+      });
+
+      // Mantém blocos na mesma faixa vertical.
+      const base = candidates[0];
+      let groups = candidates.filter(c => {
+        const yClose = Math.abs((c.y + c.h / 2) - (base.y + base.h / 2)) <= Math.max(30, base.h * 0.22);
+        const hClose = Math.abs(c.h - base.h) <= Math.max(35, base.h * 0.25);
+        return yClose && hClose;
+      });
+
+      // Se a detecção interna achou mais blocos que o necessário, usa os primeiros por posição.
+      groups.sort((a, b) => a.x - b.x);
+
+      // Remove sobreposição forte.
+      const clean = [];
+      for (const g of groups) {
+        const overlaps = clean.some(c => {
+          const left = Math.max(c.x, g.x);
+          const right = Math.min(c.x + c.w, g.x + g.w);
+          const overlap = Math.max(0, right - left);
+          return overlap > Math.min(c.w, g.w) * 0.40;
+        });
+        if (!overlaps) clean.push(g);
+      }
+
+      groups = clean;
+
+      if (groups.length >= requested) {
+        return groups.slice(0, requested).sort((a, b) => a.x - b.x);
+      }
+
+      // Fallback: se não encontrou todos os blocos internos, divide a moldura externa em blocos.
+      const outer = chooseOuterGridBox(comps);
+      if (outer && requested > 1) {
+        return splitOuterBoxIntoGroups(outer, requested);
+      }
+
+      return groups.slice(0, requested).sort((a, b) => a.x - b.x);
+    }
+
+    function chooseOuterGridBox(comps) {
+      const arr = comps.filter(c => c.area > 500 && c.w > 150 && c.h > 120);
+      if (!arr.length) return null;
+      arr.sort((a, b) => (b.w * b.h) - (a.w * a.h));
+      return arr[0];
+    }
+
+    function splitOuterBoxIntoGroups(outer, n) {
+      const groups = [];
+      // Remove cabeçalho "QUADRO DE LEITURA POR FOTO" e bordas externas.
+      const topPad = Math.max(14, outer.h * 0.065);
+      const bottomPad = Math.max(5, outer.h * 0.018);
+      const sidePad = Math.max(5, outer.w * 0.010);
+      const usableX = outer.x + sidePad;
+      const usableY = outer.y + topPad;
+      const usableW = outer.w - (sidePad * 2);
+      const usableH = outer.h - topPad - bottomPad;
+      const gap = Math.max(4, usableW * 0.006);
+      const blockW = (usableW - gap * (n - 1)) / n;
+
+      for (let i = 0; i < n; i++) {
+        groups.push({
+          x: usableX + i * (blockW + gap),
+          y: usableY,
+          w: blockW,
+          h: usableH,
+          area: blockW * usableH,
+          fallback: true
+        });
+      }
+      return groups;
+    }
+
+    function parseOffset(index) {
+      const id = index === 0 ? "block1Offset" : "block2Offset";
+      const el = document.getElementById(id);
+      if (!el) return { x: 0, y: 0 };
+      const parts = String(el.value || "0,0").replace(";", ",").split(",");
+      const x = parseFloat((parts[0] || "0").replace(",", "."));
+      const y = parseFloat((parts[1] || "0").replace(",", "."));
+      return { x: Number.isFinite(x) ? x : 0, y: Number.isFinite(y) ? y : 0 };
+    }
+
+    function getProjectionLines(canvas, imgData, comp, axis, expected) {
+      const data = imgData.data, w = canvas.width, h = canvas.height;
+      const x0 = Math.max(0, comp.x - 2), y0 = Math.max(0, comp.y - 2);
+      const x1 = Math.min(w - 1, comp.x + comp.w + 1), y1 = Math.min(h - 1, comp.y + comp.h + 1);
+
+      const len = axis === "y" ? (y1 - y0 + 1) : (x1 - x0 + 1);
+      const proj = new Array(len).fill(0);
+
+      if (axis === "y") {
+        for (let y = y0; y <= y1; y++) {
+          let s = 0;
+          for (let x = x0; x <= x1; x++) {
+            const idx = (y * w + x) * 4;
+            if (gridPixelFromRGBA(data[idx], data[idx + 1], data[idx + 2])) s++;
+          }
+          proj[y - y0] = s;
+        }
+      } else {
+        for (let x = x0; x <= x1; x++) {
+          let s = 0;
+          for (let y = y0; y <= y1; y++) {
+            const idx = (y * w + x) * 4;
+            if (gridPixelFromRGBA(data[idx], data[idx + 1], data[idx + 2])) s++;
+          }
+          proj[x - x0] = s;
+        }
+      }
+
+      const maxVal = Math.max(...proj);
+      const ratios = [0.70, 0.60, 0.50, 0.40, 0.30, 0.22];
+
+      for (const ratio of ratios) {
+        const threshold = maxVal * ratio;
+        const groups = [];
+        let start = -1;
+        let strength = 0;
+
+        for (let i = 0; i < proj.length; i++) {
+          if (proj[i] >= threshold) {
+            if (start < 0) {
+              start = i;
+              strength = 0;
+            }
+            strength += proj[i];
+          } else if (start >= 0) {
+            const end = i - 1;
+            groups.push({ start, end, strength });
+            start = -1;
+          }
+        }
+
+        if (start >= 0) {
+          groups.push({ start, end: proj.length - 1, strength });
+        }
+
+        if (groups.length >= expected) {
+          const strongest = groups
+            .sort((a, b) => b.strength - a.strength)
+            .slice(0, expected)
+            .sort((a, b) => a.start - b.start);
+
+          return strongest.map(g => {
+            let total = 0, weighted = 0;
+            for (let i = g.start; i <= g.end; i++) {
+              total += proj[i];
+              weighted += proj[i] * i;
+            }
+            const center = total > 0 ? weighted / total : (g.start + g.end) / 2;
+            return (axis === "y" ? y0 : x0) + center;
+          });
+        }
+      }
+
+      // Fallback geométrico
+      const arr = [];
+      const startCoord = axis === "y" ? y0 : x0;
+      const size = axis === "y" ? (y1 - y0) : (x1 - x0);
+
+      for (let i = 0; i < expected; i++) {
+        arr.push(startCoord + (size * i / (expected - 1)));
+      }
+
+      return arr;
+    }
+
+    function readMarksAuto() {
+      if (!refreshSettingsForRead()) return false;
+      if (!imgLoaded) return false;
+
+      const canvas = document.getElementById("photoCanvas"),
+        ctx = canvas.getContext("2d"),
+        imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+      const comps = findGridComponents(canvas, imgData);
+      const groups = chooseGridGroups(comps);
+
+      if (!groups.length) return false;
+
+      currentColumns = groups.length;
+      rowsPerColumn = Math.ceil(questionCount / currentColumns);
+
+      const minMark = parseFloat(document.getElementById("minMark").value || "0.45");
+      const minDiff = parseFloat(document.getElementById("minDiff").value || "0.18");
+      const bubbleY = parseFloat(document.getElementById("bubbleY").value || "0.58");
+      const areaFactor = parseFloat(document.getElementById("readRadius").value || "0.42");
+      const keyOK = hasOfficialKey();
+
+      detected = [];
+      lastPoints = [];
+      detectedBoxes = groups.map(g => ({ x: g.x, y: g.y, w: g.w, h: g.h }));
+
+      const groupData = groups.map((g, idx) => {
+        let xLines = getProjectionLines(canvas, imgData, g, "x", 7);
+        let yLines = getProjectionLines(canvas, imgData, g, "y", rowsPerColumn + 2);
+
+        // Fallback geométrico conhecido do modelo.
+        // A primeira coluna "Questão" ocupa cerca de 32% da largura.
+        if (!xLines || xLines.length < 7 || g.fallback) {
+          xLines = [
+            g.x,
+            g.x + (g.w * qFrac),
+            g.x + (g.w * (qFrac + (optFrac / 5) * 1)),
+            g.x + (g.w * (qFrac + (optFrac / 5) * 2)),
+            g.x + (g.w * (qFrac + (optFrac / 5) * 3)),
+            g.x + (g.w * (qFrac + (optFrac / 5) * 4)),
+            g.x + g.w
+          ];
+        }
+
+        if (!yLines || yLines.length < rowsPerColumn + 2 || g.fallback) {
+          yLines = [];
+          for (let i = 0; i < rowsPerColumn + 2; i++) {
+            yLines.push(g.y + (g.h * i / (rowsPerColumn + 1)));
+          }
+        }
+
+        return { box: g, xLines, yLines, offset: parseOffset(idx) };
+      });
+
+      for (let q = 0; q < questionCount; q++) {
+        const col = Math.floor(q / rowsPerColumn);
+        const row = q % rowsPerColumn;
+        const gd = groupData[col];
+
+        if (!gd) {
+          detected.push({ answer: "", status: "review", confidence: 0, strength: 0, note: "grupo não detectado", scores: [] });
+          continue;
+        }
+
+        const xLines = gd.xLines;
+        const yLines = gd.yLines;
+
+        if (xLines.length < 7 || yLines.length < rowsPerColumn + 2) {
+          detected.push({ answer: "", status: "review", confidence: 0, strength: 0, note: "grade incompleta", scores: [] });
+          continue;
+        }
+
+        const rowTop = yLines[row + 1];
+        const rowBottom = yLines[row + 2];
+        const rowH = Math.max(2, rowBottom - rowTop);
+
+        const scores = letters.map((L, i) => {
+          const xLeft = xLines[i + 1] + gd.offset.x;
+          const xRight = xLines[i + 2] + gd.offset.x;
+          const yTop = rowTop + gd.offset.y;
+          const yBottom = rowBottom + gd.offset.y;
+
+          const cell = markScoreCell(imgData, xLeft, xRight, yTop, yBottom, areaFactor);
+
+          const x = (xLeft + xRight) / 2;
+          const y = rowTop + (rowH * bubbleY) + gd.offset.y;
+
+          return {
+            letter: L,
+            score: cell.score,
+            x,
+            y,
+            radius: 4,
+            inkRatio: cell.inkRatio,
+            strongRatio: cell.strongRatio,
+            box: cell.box
+          };
+        });
+
+        const sorted = [...scores].sort((a, b) => b.score - a.score);
+        const best = sorted[0];
+        const second = sorted[1];
+        const diff = best.score - second.score;
+
+        const markedAbove = scores.filter(s => s.score >= minMark);
+        const possibleDuplicates = markedAbove.filter(s => s.score >= best.score * 0.78);
+
+        let answer = "", status = "review", note = "";
+
+        if (best.score < minMark) {
+          answer = "";
+          status = "blank";
+          note = "sem marca suficiente";
+        } else if (possibleDuplicates.length > 1) {
+          answer = best.letter;
+          status = "review";
+          note = "possível duplicidade";
+        } else if (diff < minDiff) {
+          answer = best.letter;
+          status = "review";
+          note = "diferença baixa";
+        } else {
+          answer = best.letter;
+          status = keyOK ? (answer === answerKey[q] ? "ok" : "err") : "read";
+          note = "lida";
+        }
+
+        detected.push({
+          answer,
+          status,
+          confidence: diff,
+          strength: best.score,
+          note: "bloco " + (col + 1) + ": " + note,
+          scores
+        });
+
+        scores.forEach(s => {
+          lastPoints.push({ x: s.x, y: s.y, r: 2.1, status: "review", box: s.box });
+        });
+        lastPoints.push({ x: best.x, y: best.y, r: 6, status, box: best.box });
+      }
+
+      drawGuides();
+      updateResults();
+
+      document.getElementById("photoStatus").textContent =
+        keyOK
+          ? "Leitura concluída. Blocos detectados: " + groups.length + ". O bloco 1 e o bloco 2 foram lidos separadamente."
+          : "Respostas lidas. Blocos detectados: " + groups.length + ". Para calcular acertos, informe o gabarito oficial.";
+
+      return true;
+    }
+
+    function readMarks() {
+      if (readMarksAuto()) return;
+
+      if (!imgLoaded) {
+        alert("Carregue a foto.");
+        return;
+      }
+
+      if (corners.length === 4) {
+        document.getElementById("photoStatus").textContent = "Detecção automática não encontrou a tabela. Usando leitura pelos 4 cantos marcados.";
+        readMarksManualFallback();
+        return;
+      }
+
+      alert("Não consegui detectar automaticamente a tabela. Marque manualmente os 4 cantos da TABELA do gabarito e clique novamente em ler.");
+    }
+
+
+
+    function markScoreMappedCell(imgData, uLeft, uRight, vTop, vBottom) {
+      const w = imgData.width, h = imgData.height, data = imgData.data;
+
+      const uStart = uLeft + (uRight - uLeft) * 0.30;
+      const uEnd = uLeft + (uRight - uLeft) * 0.70;
+      const vStart = vTop + (vBottom - vTop) * 0.34;
+      const vEnd = vTop + (vBottom - vTop) * 0.88;
+
+      let ink = 0;
+      let strongInk = 0;
+      let colorOrDarkSum = 0;
+      let count = 0;
+
+      const samplesX = 9;
+      const samplesY = 9;
+
+      for (let sy = 0; sy < samplesY; sy++) {
+        const vv = vStart + (vEnd - vStart) * (sy / Math.max(1, samplesY - 1));
+
+        for (let sx = 0; sx < samplesX; sx++) {
+          const uu = uStart + (uEnd - uStart) * (sx / Math.max(1, samplesX - 1));
+          const p = map(uu, vv);
+          const x = Math.round(p.x);
+          const y = Math.round(p.y);
+
+          if (x < 0 || y < 0 || x >= w || y >= h) continue;
+
+          const idx = (y * w + x) * 4;
+          const red = data[idx], green = data[idx + 1], blue = data[idx + 2];
+
+          const gray = (red * 0.299) + (green * 0.587) + (blue * 0.114);
+          const maxc = Math.max(red, green, blue);
+          const minc = Math.min(red, green, blue);
+          const chroma = maxc - minc;
+          const darkness = 1 - (gray / 255);
+
+          const isDark = gray < 145;
+          const isSoftDark = gray < 175;
+          const isBlueOrColored = (chroma > 38 && gray < 235);
+
+          let pixelScore = 0;
+          if (isDark) pixelScore = 1;
+          else if (isBlueOrColored) pixelScore = Math.min(1, (chroma / 100) * 0.65 + darkness * 0.55);
+          else if (isSoftDark) pixelScore = 0.45;
+
+          if (pixelScore > 0) {
+            ink++;
+            colorOrDarkSum += pixelScore;
+          }
+
+          if (pixelScore >= 0.75) strongInk++;
+          count++;
+        }
+      }
+
+      if (!count) return {score: 0, inkRatio: 0, strongRatio: 0};
+
+      const inkRatio = ink / count;
+      const strongRatio = strongInk / count;
+      const avgInk = ink ? colorOrDarkSum / ink : 0;
+      const score = (inkRatio * 0.70) + (avgInk * 0.20) + (strongRatio * 0.10);
+
+      const center = map((uLeft + uRight) / 2, (vTop + vBottom) / 2);
+
+      return {
+        score,
+        inkRatio,
+        strongRatio,
+        x: center.x,
+        y: center.y
+      };
+    }
+
+    function readMarksManualFallback() {
+      if (!refreshSettingsForRead()) return;
+      if (!imgLoaded) { alert("Carregue a foto."); return }
+      if (corners.length !== 4) {
+        alert("Para usar esta opção, clique primeiro nos 4 cantos da TABELA do gabarito. Não inclua o título GABARITO.");
+        return;
+      }
+
+      const canvas = document.getElementById("photoCanvas"),
+        ctx = canvas.getContext("2d"),
+        imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+      const blockModeEl = document.getElementById("blockMode");
+      const requestedBlocks = blockModeEl && blockModeEl.value !== "auto" ? parseInt(blockModeEl.value, 10) : currentColumns;
+
+      if (Number.isFinite(requestedBlocks) && requestedBlocks > 0) {
+        currentColumns = requestedBlocks;
+      }
+
+      rowsPerColumn = Math.ceil(questionCount / currentColumns);
+
+      const minMark = parseFloat(document.getElementById("minMark").value || "0.45");
+      const minDiff = parseFloat(document.getElementById("minDiff").value || "0.18");
+      const keyOK = hasOfficialKey();
+
+      const totalRows = rowsPerColumn + 1;
+
+      detected = [];
+      lastPoints = [];
+      detectedBoxes = [];
+
+      for (let q = 0; q < questionCount; q++) {
+        const col = Math.floor(q / rowsPerColumn);
+        const row = q % rowsPerColumn;
+        const groupW = 1 / currentColumns;
+
+        const vTop = (1 + row) / totalRows;
+        const vBottom = (1 + row + 1) / totalRows;
+
+        const scores = letters.map((L, i) => {
+          const uLeft = col * groupW + (qFrac + (optFrac / 5) * i) * groupW;
+          const uRight = col * groupW + (qFrac + (optFrac / 5) * (i + 1)) * groupW;
+
+          const cell = markScoreMappedCell(imgData, uLeft, uRight, vTop, vBottom);
+
+          return {
+            letter: L,
+            score: cell.score,
+            x: cell.x,
+            y: cell.y,
+            inkRatio: cell.inkRatio,
+            strongRatio: cell.strongRatio
+          };
+        });
+
+        const sorted = [...scores].sort((a, b) => b.score - a.score);
+        const best = sorted[0], second = sorted[1];
+        const diff = best.score - second.score;
+
+        const markedAbove = scores.filter(s => s.score >= minMark);
+        const possibleDuplicates = markedAbove.filter(s => s.score >= best.score * 0.78);
+
+        let answer = "", status = "review", note = "";
+
+        if (best.score < minMark) {
+          answer = "";
+          status = "blank";
+          note = "4 cantos: sem marca suficiente";
+        } else if (possibleDuplicates.length > 1) {
+          answer = best.letter;
+          status = "review";
+          note = "4 cantos: possível duplicidade";
+        } else if (diff < minDiff) {
+          answer = best.letter;
+          status = "review";
+          note = "4 cantos: diferença baixa";
+        } else {
+          answer = best.letter;
+          status = keyOK ? (answer === answerKey[q] ? "ok" : "err") : "read";
+          note = "4 cantos: lida";
+        }
+
+        detected.push({
+          answer,
+          status,
+          confidence: diff,
+          strength: best.score,
+          note,
+          scores
+        });
+
+        scores.forEach(s => {
+          lastPoints.push({ x: s.x, y: s.y, r: 2.5, status: "review" });
+        });
+        lastPoints.push({ x: best.x, y: best.y, r: 7, status });
+      }
+
+      drawGuides();
+      updateResults();
+
+      document.getElementById("photoStatus").textContent =
+        keyOK
+          ? "Leitura pelos 4 cantos concluída. Este modo é recomendado para foto tirada pelo celular."
+          : "Respostas lidas pelos 4 cantos. Para calcular acertos, informe o gabarito oficial.";
+    }
+    function applyOfficialKey() {
+      answerKey = parseKey(document.getElementById("answerKey").value);
+      if (answerKey.length !== questionCount) {
+        alert("Para corrigir, informe o gabarito oficial com exatamente " + questionCount + " respostas. Atualmente há " + answerKey.length + ".");
+        return;
+      }
+      if (!detected.length) {
+        alert("Primeiro leia as respostas da foto.");
+        return;
+      }
+      detected = detected.map((it, i) => {
+        if (!it.answer) return { ...it, status: "blank" };
+        if (it.status === "review") return it;
+        return { ...it, status: it.answer === answerKey[i] ? "ok" : "err" };
+      });
+      lastPoints = lastPoints.map((p, i) => {
+        const it = detected[i] || {};
+        return { ...p, status: it.status || "review" };
+      });
+      drawGuides(); updateResults();
+      document.getElementById("photoStatus").textContent = "Correção aplicada com o gabarito oficial.";
+    }
+    function finalStatus(i) {
+      const it = detected[i] || { answer: "", status: "review" };
+      const keyOK = hasOfficialKey();
+      if (it.status === "review") return { className: "review", label: "Revisar" };
+      if (it.answer === "") return { className: "blank", label: "Em branco" };
+      if (!keyOK) return { className: "read", label: "Resposta lida" };
+      if (it.answer === answerKey[i]) return { className: "ok", label: "Correta" };
+      return { className: "err", label: "Errada" };
+    }
+    function updateResults() {
+      answerKey = parseKey(document.getElementById("answerKey").value);
+      const keyOK = hasOfficialKey();
+      const total = questionCount || 0;
+      const read = detected.filter(it => it && it.answer !== "").length;
+      const correct = keyOK ? detected.filter((it, i) => it && it.answer === answerKey[i] && it.status !== "review").length : null;
+      const wrong = keyOK ? detected.filter((it, i) => it && ["err", "blank", "review"].includes(finalStatus(i).className)).length : null;
+      const scoreMax = parseFloat(document.getElementById("scoreMax").value || "10");
+      const score = keyOK && total ? correct / total * scoreMax : null;
+      document.getElementById("metricTotal").textContent = total;
+      document.getElementById("metricRead").textContent = read;
+      document.getElementById("metricCorrect").textContent = keyOK ? correct : "-";
+      document.getElementById("metricWrong").textContent = keyOK ? wrong : "-";
+      document.getElementById("metricScore").textContent = keyOK ? score.toFixed(2).replace(".", ",") : "-";
+      renderTable();
+    }
+
+    function safeNumber(value) {
+      const n = Number(value);
+      return Number.isFinite(n) ? n : 0;
+    }
+
+    function formatPercent(value) {
+      const n = safeNumber(value);
+      return (n * 100).toFixed(1).replace(".", ",") + "%";
+    }
+
+    function getPrecisionInfo(item) {
+      if (!item || !item.scores || !item.scores.length) {
+        return { percent: "-", detail: "Sem leitura" };
+      }
+
+      const ordered = [...item.scores].sort((a, b) => safeNumber(b.score) - safeNumber(a.score));
+      const best = ordered[0] || { letter: "-", score: 0 };
+      const second = ordered[1] || { letter: "-", score: 0 };
+
+      const bestScore = safeNumber(best.score);
+      const secondScore = safeNumber(second.score);
+      const diff = Math.max(0, bestScore - secondScore);
+
+      let level = "Baixa";
+      if (bestScore >= 0.45 && diff >= 0.18) level = "Alta";
+      else if (bestScore >= 0.30 && diff >= 0.08) level = "Média";
+
+      return {
+        percent: formatPercent(bestScore),
+        detail: level + " — " + best.letter + " (" + formatPercent(bestScore) + ")"
+      };
+    }
+
+    function renderTable() {
+      let html = `<table class="result"><thead><tr><th>Questão</th><th>Gabarito</th><th>Lida</th><th>Ajuste manual</th><th>Situação</th><th>Precisão da leitura</th></tr></thead><tbody>`;
+
+      for (let i = 0; i < questionCount; i++) {
+        const it = detected[i] || { answer: "", status: "review", confidence: 0, scores: [] };
+        const st = finalStatus(i);
+        const precision = getPrecisionInfo(it);
+
+        html += `<tr class="${st.className}">
+      <td>${i + 1}</td>
+      <td>${answerKey[i] || "-"}</td>
+      <td>${it.answer || "-"}</td>
+      <td>
+        <select class="answer-select" onchange="manualAdjust(${i},this.value)">
+          <option value="" ${it.answer === "" ? "selected" : ""}>Branco</option>
+          ${letters.map(L => `<option value="${L}" ${it.answer === L ? "selected" : ""}>${L}</option>`).join("")}
+        </select>
+      </td>
+      <td><span class="badge ${st.className}">${st.label}</span><br><span class="score-mini">${it.note || ""}</span></td>
+      <td class="score-mini">${precision.detail}</td>
+    </tr>`;
+      }
+
+      html += `</tbody></table>`;
+      document.getElementById("resultTable").innerHTML = html;
+    }
+    function manualAdjust(i, v) {
+      if (!detected[i]) detected[i] = { answer: "", status: "review", confidence: 0, scores: [] };
+      detected[i].answer = v;
+      if (v === "") detected[i].status = "blank";
+      else detected[i].status = hasOfficialKey() ? (v === answerKey[i] ? "ok" : "err") : "read";
+      detected[i].confidence = 1;
+      if (lastPoints[i]) lastPoints[i].status = detected[i].status;
+      drawGuides();
+      updateResults();
+    }
+    function copySummary() {
+      answerKey = parseKey(document.getElementById("answerKey").value);
+      const keyOK = hasOfficialKey();
+      const name = document.getElementById("studentName").value.trim() || "Aluno";
+      const respostas = detected.map((it, i) => `${i + 1}-${it.answer || "Branco"}`).join(", ");
+      let txt = `Leitura por foto
+Aluno: ${name}
+Quantidade de questões: ${questionCount}
+Respostas lidas: ${respostas}`;
+      if (keyOK) {
+        const correct = detected.filter((it, i) => it && it.answer === answerKey[i] && it.status !== "review").length;
+        const scoreMax = parseFloat(document.getElementById("scoreMax").value || "10"), score = questionCount ? correct / questionCount * scoreMax : 0;
+        const revisar = Array.from({ length: questionCount }, (_, i) => ({ i, st: finalStatus(i).className })).filter(x => x.st !== "ok").map(x => x.i + 1).join(", ") || "Nenhuma";
+        txt += `
+Acertos: ${correct}
+Erros/em branco/revisar: ${questionCount - correct}
+Nota: ${score.toFixed(2).replace(".", ",")}
+Questões para revisar: ${revisar}`;
+      } else {
+        txt += `
+Observação: gabarito oficial não informado. Resultado contém apenas as respostas lidas.`;
+      }
+      navigator.clipboard.writeText(txt).then(() => alert("Resumo copiado.")).catch(() => alert(txt));
+    }
+    function downloadCSV() {
+      answerKey = parseKey(document.getElementById("answerKey").value);
+      let csv = "Questao;Gabarito;Lida;Situacao;Precisao;Observacao\n";
+
+      for (let i = 0; i < questionCount; i++) {
+        const it = detected[i] || { answer: "", scores: [] };
+        const st = finalStatus(i);
+        const precision = getPrecisionInfo(it);
+
+        csv += `${i + 1};${answerKey[i] || "-"};${it.answer || "-"};${st.label};${precision.percent};${it.note || ""}\n`;
+      }
+
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "leitura_gabarito_foto_corrigida.csv";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+    function loadExample() {
+      document.getElementById("questionCount").value = "20"; document.getElementById("columns").value = "2"; document.getElementById("scoreMax").value = "10"; if (document.getElementById("blockMode")) document.getElementById("blockMode").value = "2";
+      document.getElementById("answerKey").value = "1 A\n2 B\n3 C\n4 D\n5 E\n6 A\n7 B\n8 C\n9 D\n10 E\n11 A\n12 B\n13 C\n14 D\n15 E\n16 A\n17 B\n18 C\n19 D\n20 E";
+      prepareCard();
+    }
+    function clearAll() {
+      questionCount = 20; currentColumns = 1; rowsPerColumn = 20; answerKey = []; detected = []; corners = []; imgLoaded = false; originalImage = null; lastPoints = []; detectedBoxes = [];
+      document.getElementById("questionCount").value = "20"; document.getElementById("columns").value = "auto"; document.getElementById("scoreMax").value = "10"; document.getElementById("answerKey").value = ""; document.getElementById("studentName").value = ""; document.getElementById("photoInput").value = ""; if(document.getElementById("cameraInput"))document.getElementById("cameraInput").value = ""; if (document.getElementById("blockMode")) document.getElementById("blockMode").value = "2"; if (document.getElementById("bubbleY")) document.getElementById("bubbleY").value = "0.58"; if (document.getElementById("readRadius")) document.getElementById("readRadius").value = "0.42"; if (document.getElementById("block1Offset")) document.getElementById("block1Offset").value = "0,0"; if (document.getElementById("block2Offset")) document.getElementById("block2Offset").value = "0,0";
+      document.getElementById("sheetPreview").innerHTML = ""; document.getElementById("photoStatus").textContent = "";
+      document.getElementById("photoCanvas").style.display = "none"; updateCornerUI(); updateResults(); showTab("setup");
+    }
+    updateCornerUI(); updateResults();
+  </script>
+
+  <script>
+    (function () {
+      function numeroSeguro(valor) {
+        const n = Number(valor);
+        return Number.isFinite(n) ? n : 0;
+      }
+
+      function formatarNota(valor) {
+        return numeroSeguro(valor).toFixed(2).replace(".", ",");
+      }
+
+      function formatarPercentual(valor) {
+        return (numeroSeguro(valor) * 100).toFixed(0).replace(".", ",") + "%";
+      }
+
+      function obterMencao(percentual) {
+        const p = numeroSeguro(percentual);
+
+        if (p <= 0) {
+          return { codigo: "-", descricao: "Sem nota", faixa: "0%" };
+        }
+
+        if (p <= 0.25) {
+          return { codigo: "I", descricao: "Insatisfatório", faixa: "até 25%" };
+        }
+
+        if (p <= 0.50) {
+          return { codigo: "R", descricao: "Regular", faixa: "até 50%" };
+        }
+
+        if (p <= 0.75) {
+          return { codigo: "B", descricao: "Bom", faixa: "até 75%" };
+        }
+
+        return { codigo: "MB", descricao: "Muito bom", faixa: "até 100%" };
+      }
+
+      function garantirCampoMencao() {
+        let metricMention = document.getElementById("metricMention");
+
+        if (metricMention) {
+          return metricMention;
+        }
+
+        const scoreMetric = document.getElementById("metricScore");
+        if (!scoreMetric) {
+          return null;
+        }
+
+        const scoreCard = scoreMetric.closest(".metric");
+        if (!scoreCard || !scoreCard.parentNode) {
+          return null;
+        }
+
+        const card = document.createElement("div");
+        card.className = "metric";
+        card.innerHTML = '<strong id="metricMention">-</strong><span>Menção</span>';
+        scoreCard.parentNode.insertBefore(card, scoreCard.nextSibling);
+
+        const summary = card.closest(".summary");
+        if (summary) {
+          summary.style.gridTemplateColumns = "repeat(6, 1fr)";
+        }
+
+        return document.getElementById("metricMention");
+      }
+
+      function calcularMencaoAtual() {
+        const metricMention = garantirCampoMencao();
+        if (!metricMention) {
+          return;
+        }
+
+        if (typeof hasOfficialKey !== "function" || typeof parseKey !== "function") {
+          metricMention.textContent = "-";
+          return;
+        }
+
+        // Atualiza o gabarito oficial, usando as mesmas variáveis globais da V8.
+        try {
+          answerKey = parseKey(document.getElementById("answerKey").value);
+        } catch (e) { }
+
+        if (!hasOfficialKey() || !Array.isArray(detected) || !detected.length || !questionCount) {
+          metricMention.textContent = "-";
+          metricMention.title = "Informe o gabarito oficial e aplique a correção para calcular a menção.";
+          return;
+        }
+
+        const acertos = detected.filter(function (item, i) {
+          return item && item.answer === answerKey[i] && item.status !== "review";
+        }).length;
+
+        const percentual = acertos / questionCount;
+        const mencao = obterMencao(percentual);
+
+        metricMention.textContent = mencao.codigo;
+        metricMention.title = mencao.descricao + " — " + mencao.faixa + " — " + formatarPercentual(percentual);
+      }
+
+      // Envolve updateResults sem alterar a leitura da imagem.
+      if (typeof updateResults === "function" && !window.__mencaoUpdateResultsAplicado) {
+        const updateResultsOriginal = updateResults;
+
+        updateResults = function () {
+          updateResultsOriginal.apply(this, arguments);
+          calcularMencaoAtual();
+        };
+
+        window.__mencaoUpdateResultsAplicado = true;
+      }
+
+      // Acrescenta menção no resumo copiado, mantendo o resumo original da V8.
+      if (typeof copySummary === "function" && !window.__mencaoCopySummaryAplicado) {
+        const copySummaryOriginal = copySummary;
+
+        copySummary = function () {
+          if (typeof hasOfficialKey !== "function" || !hasOfficialKey()) {
+            return copySummaryOriginal.apply(this, arguments);
+          }
+
+          const name = document.getElementById("studentName").value.trim() || "Aluno";
+          const respostas = detected.map(function (item, i) {
+            return (i + 1) + "-" + (item.answer || "Branco");
+          }).join(", ");
+
+          const acertos = detected.filter(function (item, i) {
+            return item && item.answer === answerKey[i] && item.status !== "review";
+          }).length;
+
+          const scoreMax = parseFloat(document.getElementById("scoreMax").value || "10");
+          const percentual = questionCount ? acertos / questionCount : 0;
+          const nota = percentual * scoreMax;
+          const mencao = obterMencao(percentual);
+
+          const revisar = Array.from({ length: questionCount }, function (_, i) {
+            return { i: i, st: finalStatus(i).className };
+          })
+            .filter(function (item) { return item.st !== "ok"; })
+            .map(function (item) { return item.i + 1; })
+            .join(", ") || "Nenhuma";
+
+          const texto = `Leitura por foto
+Aluno: ${name}
+Quantidade de questões: ${questionCount}
+Respostas lidas: ${respostas}
+Acertos: ${acertos}
+Percentual de aproveitamento: ${formatarPercentual(percentual)}
+Nota máxima: ${formatarNota(scoreMax)}
+Nota obtida: ${formatarNota(nota)}
+Menção: ${mencao.codigo} — ${mencao.descricao} (${mencao.faixa})
+Erros/em branco/revisar: ${questionCount - acertos}
+Questões para revisar: ${revisar}`;
+
+          navigator.clipboard.writeText(texto).then(function () {
+            alert("Resumo copiado.");
+          }).catch(function () {
+            alert(texto);
+          });
+        };
+
+        window.__mencaoCopySummaryAplicado = true;
+      }
+
+      // Acrescenta resumo de menção ao CSV, mantendo as linhas originais.
+      if (typeof downloadCSV === "function" && !window.__mencaoDownloadCSVAplicado) {
+        downloadCSV = function () {
+          answerKey = parseKey(document.getElementById("answerKey").value);
+
+          let csv = "Questao;Gabarito;Lida;Situacao;Precisao;Observacao\n";
+
+          for (let i = 0; i < questionCount; i++) {
+            const item = detected[i] || { answer: "", scores: [] };
+            const status = finalStatus(i);
+            const precision = getPrecisionInfo(item);
+            csv += `${i + 1};${answerKey[i] || "-"};${item.answer || "-"};${status.label};${precision.percent};${item.note || ""}\n`;
+          }
+
+          if (hasOfficialKey()) {
+            const acertos = detected.filter(function (item, i) {
+              return item && item.answer === answerKey[i] && item.status !== "review";
+            }).length;
+
+            const scoreMax = parseFloat(document.getElementById("scoreMax").value || "10");
+            const percentual = questionCount ? acertos / questionCount : 0;
+            const nota = percentual * scoreMax;
+            const mencao = obterMencao(percentual);
+
+            csv += "\nResumo;;;;;\n";
+            csv += `Acertos;${acertos};;;;\n`;
+            csv += `Percentual;${formatarPercentual(percentual)};;;;\n`;
+            csv += `Nota maxima;${formatarNota(scoreMax)};;;;\n`;
+            csv += `Nota obtida;${formatarNota(nota)};;;;\n`;
+            csv += `Mencao;${mencao.codigo} - ${mencao.descricao} (${mencao.faixa});;;;\n`;
+          }
+
+          const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "leitura_gabarito_foto_v8_com_mencao.csv";
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          URL.revokeObjectURL(url);
+        };
+
+        window.__mencaoDownloadCSVAplicado = true;
+      }
+
+      garantirCampoMencao();
+      calcularMencaoAtual();
+    })();
+  </script>
+
+
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", function () {
+      navigator.serviceWorker.register("./service-worker.js")
+        .then(function () {
+          console.log("Service Worker registrado com sucesso.");
+        })
+        .catch(function (error) {
+          console.log("Erro ao registrar Service Worker:", error);
+        });
+    });
+  }
+</script>
+
+</body>
+
+</html>
