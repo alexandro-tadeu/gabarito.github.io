@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Leitor de Gabarito PWA OpenCV - Upload Tolerante</title>
+
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#2563eb">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Gabarito Etec">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+
+<body>
+<header class="no-print">
+  <h1>Leitor de Gabarito PWA OpenCV - Upload Tolerante</h1>
+  <p>Leitura pela borda externa da tabela do gabarito: Questão / A / B / C / D / E.</p>
+</header>
+
+<main>
+  <div class="tabs no-print">
+    <button id="btnSetup" class="active" onclick="showTab('setup')">1. Configurar</button>
+    <button id="btnSheet" onclick="showTab('sheet')">2. Cartão</button>
+    <button id="btnRead" onclick="showTab('read')">3. Ler foto</button>
+  </div>
+
+  <section id="setup" class="tab active">
+    <div class="card">
+      <h2>Configuração</h2>
+
+      <div class="notice">
+        Esta versão foi adaptada para o modelo do cartão mostrado: cabeçalho Etec/CPS/São Paulo,
+        instruções à direita e tabela <strong>GABARITO</strong> com colunas <strong>Questão, A, B, C, D, E</strong>.
+      </div>
+
+      <div class="grid4">
+        <div>
+          <label>Quantidade de questões</label>
+          <input id="questionCount" type="number" min="1" max="40" value="10">
+        </div>
+
+        <div>
+          <label>Nota máxima</label>
+          <input id="scoreMax" type="number" min="0" step="0.1" value="10">
+        </div>
+
+        <div>
+          <label>Questões por tabela</label>
+          <select id="rowsPerTable">
+            <option value="10" selected>10 questões</option>
+            <option value="15">15 questões</option>
+            <option value="20">20 questões</option>
+          </select>
+        </div>
+
+        <div>
+          <label>Período</label>
+          <input id="periodo" value="matutino">
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div>
+          <label>Componente curricular</label>
+          <input id="component" value="BANCO DE DADOS I">
+        </div>
+
+        <div>
+          <label>Professor</label>
+          <input id="teacher" value="Alexandro Tadeu Mathias de Souza">
+        </div>
+      </div>
+
+      <div class="grid3">
+        <div>
+          <label>Curso</label>
+          <input id="course" value="Ensino Médio com Habilitação Profissional de Técnico em Informática para Internet">
+        </div>
+
+        <div>
+          <label>Módulo/Série</label>
+          <input id="module" placeholder="Ex.: 1º DS">
+        </div>
+
+        <div>
+          <label>Data</label>
+          <input id="dateText" placeholder="__/__/____">
+        </div>
+      </div>
+
+      <label>Nome do aluno para o relatório</label>
+      <input id="studentName" placeholder="Opcional">
+
+      <label>Gabarito oficial para correção</label>
+      <textarea id="answerKey" placeholder="Opcional para leitura. Obrigatório para calcular acertos.
+Exemplo:
+1 A
+2 B
+3 C
+4 D
+5 E"></textarea>
+
+      <div class="actions">
+        <button class="primary" onclick="prepareCard()">Gerar cartão</button>
+        <button class="secondary" onclick="loadExample()">Carregar exemplo</button>
+        <button class="secondary" onclick="clearAll()">Limpar</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="sheet" class="tab">
+    <div class="card">
+      <h2 class="no-print">Cartão A4 - Modelo Etec</h2>
+
+      <div class="warning no-print">
+        Este cartão mantém a estrutura da imagem enviada. Para ler no celular, tire a foto e toque nos
+        <strong>4 cantos externos da tabela do gabarito</strong>, conforme a frase dentro da própria tabela.
+      </div>
+
+      <div class="actions no-print">
+        <button class="primary" onclick="window.print()">Imprimir / Salvar em PDF</button>
+        <button class="secondary" onclick="showTab('read')">Ir para leitura</button>
+      </div>
+
+      <div id="sheetPreview" class="sheet-preview"></div>
+    </div>
+  </section>
+
+  <section id="read" class="tab">
+    <div class="card no-print">
+      <h2>Leitura da foto</h2>
+
+      <div class="notice">
+        Para este modelo, o modo mais seguro e corrigido é:
+        <strong>tirar a foto → tocar nos 4 cantos EXTERNOS DA BORDA PRETA da tabela inteira → Ler pelos 4 cantos da tabela</strong>.
+        O OpenCV vai corrigir a perspectiva da tabela e ler as bolinhas.
+      </div>
+
+      <div class="corner-warning">
+        <strong>ATENÇÃO AOS 4 CANTOS:</strong><br>
+        O canto 1 deve ficar na borda externa esquerda da tabela, antes da coluna <strong>Questão</strong>.<br>
+        O canto 2 deve ficar na borda externa direita da tabela, depois da coluna <strong>E</strong>.<br>
+        O canto 3 deve ficar na borda inferior direita, depois da coluna <strong>E</strong>.<br>
+        O canto 4 deve ficar na borda inferior esquerda, antes da coluna <strong>Questão</strong>.
+      </div>
+      <div id="opencvStatus" class="opencv-status">Carregando OpenCV.js...</div>
+
+      <div class="grid3">
+        <div>
+          <label>Foto do cartão preenchido</label>
+
+          <div class="camera-actions">
+            <button type="button" class="primary" onclick="document.getElementById('cameraInput').click()">📷 Tirar foto no celular</button>
+            <button type="button" class="secondary" onclick="document.getElementById('photoInput').click()">🖼️ Escolher imagem</button>
+          </div>
+
+          <input id="cameraInput" class="hidden-file" type="file" accept="image/*" capture="environment" onclick="this.value=null" onchange="loadPhoto(event)">
+          <input id="photoInput" class="hidden-file" type="file" accept="image/*" onclick="this.value=null" onchange="loadPhoto(event)">
+
+          <div class="hint">Depois da foto, toque nos 4 cantos EXTERNOS da borda preta da tabela inteira. Não clique na linha entre Questão e A.</div>
+        </div>
+
+        <div>
+          <label>Sensibilidade da marcação</label>
+          <input id="fillThreshold" type="number" min="0.01" max="1" step="0.01" value="0.09">
+          <div class="hint">Diminua se a caneta estiver clara. Aumente se marcar bolinhas vazias.</div>
+        </div>
+
+        <div>
+          <label>Diferença mínima</label>
+          <input id="diffThreshold" type="number" min="0.01" max="1" step="0.01" value="0.012">
+          <div class="hint">Ajuda a mandar para revisão quando há dúvida.</div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="secondary" onclick="clearManualCorners()">Limpar cantos</button>
+        <button class="primary" onclick="readByTableCorners()">Ler pelos 4 cantos da tabela</button>
+        <button class="secondary" onclick="readAutoTable()">Tentar detectar tabela automaticamente</button>
+        <button class="success" onclick="applyOfficialKey()">Aplicar correção com gabarito oficial</button>
+      </div>
+
+      <div id="photoStatus" class="hint"></div>
+    </div>
+
+    <div class="card no-print">
+      <h2>Imagem analisada</h2>
+      <canvas id="photoCanvas"></canvas>
+      <div class="hint">
+        Toque nos 4 cantos externos da BORDA PRETA da tabela inteira. Pegue desde antes da coluna Questão até depois da coluna E. Não clique na linha entre Questão e A.
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Resultado, nota e menção</h2>
+
+      <div class="summary">
+        <div class="metric"><strong id="metricTotal">0</strong><span>Total</span></div>
+        <div class="metric"><strong id="metricRead">0</strong><span>Lidas</span></div>
+        <div class="metric"><strong id="metricCorrect">-</strong><span>Acertos</span></div>
+        <div class="metric"><strong id="metricWrong">-</strong><span>Erros/revisar</span></div>
+        <div class="metric"><strong id="metricScore">-</strong><span>Nota</span></div>
+        <div class="metric"><strong id="metricMention">-</strong><span>Menção</span></div>
+      </div>
+
+      <div class="actions no-print">
+        <button class="success" onclick="copySummary()">Copiar resumo</button>
+        <button class="secondary" onclick="downloadCSV()">Baixar CSV</button>
+      </div>
+
+      <div id="resultTable"></div>
+
+      <div class="review-panel no-print">
+        <h2>Conferência rápida</h2>
+        <div class="hint">Se alguma questão for lida errado, toque na alternativa correta.</div>
+        <div id="quickReview" class="review-grid"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+  window.Module = {
+    onRuntimeInitialized() {
+      window.cvReady = true;
+      const el = document.getElementById("opencvStatus");
+      if (el) {
+        el.textContent = "OpenCV carregado. Pronto para leitura.";
+        el.className = "opencv-status ok";
+      }
+    }
+  };
+
+  function loadOpenCvFallback() {
+    const el = document.getElementById("opencvStatus");
+    if (el) {
+      el.textContent = "OpenCV local não encontrado. Carregando versão online...";
+      el.className = "opencv-status warn";
+    }
+
+    const script = document.createElement("script");
+    script.async = true;
+    script.src = "https://docs.opencv.org/4.x/opencv.js";
+    script.onerror = function () {
+      const el2 = document.getElementById("opencvStatus");
+      if (el2) {
+        el2.textContent = "Erro ao carregar OpenCV.js. Verifique a internet ou coloque opencv.js na pasta libs.";
+        el2.className = "opencv-status error";
+      }
+    };
+    document.body.appendChild(script);
+  }
+</script>
+
+<script async src="libs/opencv.js" onerror="loadOpenCvFallback()"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>
